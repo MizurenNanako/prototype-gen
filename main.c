@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/types.h>
-#include <dirent.h>
+#include <sys/types.h> //for linux directory searching
+#include <dirent.h>    //for linux directory searching
 #include <string.h>
 #include <ctype.h>
 
@@ -30,7 +30,7 @@ int main(int argc, char **argv)
 int filter(const struct dirent *p)
 {
     int len = strlen(p->d_name);
-
+    //filt out c source
     if (len > 2 && strcmp(p->d_name + len - 2, ".c") == 0)
         return 1;
     else
@@ -50,7 +50,7 @@ void scan(char *s)
     while (!feof(f))
     {
         char ch = fgetc(f);
-        if (ch == '#')
+        if (ch == '#') //skip preprocessor
         {
             while (ch != '\n')
             {
@@ -58,37 +58,119 @@ void scan(char *s)
             }
             continue;
         }
-        if (isalpha(ch))
+        if (ch == '/') //skip comment line
+        {
+            ch = fgetc(f);
+            if (ch == '/')
+            {
+                while (ch != '\n')
+                {
+                    ch = fgetc(f);
+                }
+                continue;
+            }
+        }
+        if (ch == '/') //skip comment block
+                {
+                    ch = fgetc(f);
+                    if (ch == '*')
+                    {
+                        while (1)
+                        {
+                            ch = fgetc(f);
+                            if (ch == '*')
+                            {
+                                ch = fgetc(f);
+                                if (ch == '/')
+                                {
+                                    break;
+                                }
+                            }
+                        }
+                        break;
+                    }
+                }
+        if (isalpha(ch)) //logical line starts
         {
             char cur_prot[PROBUFLEN] = {0};
             int cur_token = 0;
             while (!feof(f))
             {
-                if (ch == ';')
+                if (ch == ';') //logical line ends
                 {
-                    cur_token = 0;
+                    break;
+                }
+                if ((ch == '\n') || (ch == '\r') || (ch == '}')) //jump blank char
+                {
+                    ch = ' ';
+                    cur_prot[cur_token] = ch;
+                    ++cur_token;
                     ch = fgetc(f);
                     continue;
                 }
-                if ((ch == '\n') || (ch == '\r') || (ch == '}'))
+                if (ch == '/') //skip comment line
                 {
                     ch = fgetc(f);
-                    continue;
+                    if (ch == '/')
+                    {
+                        while (ch != '\n')
+                        {
+                            ch = fgetc(f);
+                        }
+                        break;
+                    }
                 }
-                if (ch == '{')
+                if (ch == '/') //skip comment block
                 {
+                    ch = fgetc(f);
+                    if (ch == '*')
+                    {
+                        while (1)
+                        {
+                            ch = fgetc(f);
+                            if (ch == '*')
+                            {
+                                ch = fgetc(f);
+                                if (ch == '/')
+                                {
+                                    break;
+                                }
+                            }
+                        }
+                        break;
+                    }
+                }
+                if (ch == '{') //end of prototype
+                {
+                    if (cur_prot[cur_token - 1] == ' ')
+                        --cur_token;
                     cur_prot[cur_token++] = ';';
-                    cur_prot[cur_token] = 0;
-                    puts(cur_prot);
+                    cur_prot[cur_token] = 0; //mark the end
+                    puts(cur_prot);          //output to stdout
                     //skip to right '}'
-                    while (ch != '}')
+                    int level = 1;
+                    while (level > 0)
                     {
                         ch = fgetc(f);
+                        if (ch == '{')
+                        {
+                            ++level;
+                            continue;
+                        }
+                        if (ch == '}')
+                        {
+                            --level;
+                            continue;
+                        }
+                        if (ch == EOF) //in case it dont stops
+                        {
+                            return;
+                        }
                     }
                     ch = fgetc(f);
                     break;
                 }
-                cur_prot[cur_token] = ch;
+                cur_prot[cur_token] = ch; //read more
                 ++cur_token;
                 ch = fgetc(f);
             }
