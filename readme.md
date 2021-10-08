@@ -2,7 +2,7 @@
 
 A single file program to generate `\*.c` file prototypes.
 
-** Usage:  **
+## Usage:
 ```sh
 # GCC:
 gcc prototype-gen.c -o prototype-gen
