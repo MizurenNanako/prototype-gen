@@ -16,12 +16,15 @@ void scan(char *s);
 int main(int argc, char **argv)
 {
     int i, n;
+    //you should change the part of code to search through directories
+    //if you are running this under windows
     struct dirent **p;
     n = scandir(argv[1], &p, filter, alphasort);
     for (i = 0; i < n; i++)
     {
         strcpy(filename, argv[1]);
         strcat(filename, p[i]->d_name);
+        printf("// %s :\n", filename);
         scan(filename);
     }
     return 0;
@@ -58,7 +61,7 @@ void scan(char *s)
             }
             continue;
         }
-        if (ch == '/') //skip comment line
+        if (ch == '/') //skip comment line and block
         {
             ch = fgetc(f);
             if (ch == '/')
@@ -69,27 +72,23 @@ void scan(char *s)
                 }
                 continue;
             }
-        }
-        if (ch == '/') //skip comment block
+            if (ch == '*')
+            {
+                while (1)
                 {
                     ch = fgetc(f);
                     if (ch == '*')
                     {
-                        while (1)
+                        ch = fgetc(f);
+                        if (ch == '/')
                         {
-                            ch = fgetc(f);
-                            if (ch == '*')
-                            {
-                                ch = fgetc(f);
-                                if (ch == '/')
-                                {
-                                    break;
-                                }
-                            }
+                            break;
                         }
-                        break;
                     }
                 }
+                continue;
+            }
+        }
         if (isalpha(ch)) //logical line starts
         {
             char cur_prot[PROBUFLEN] = {0};
@@ -119,10 +118,6 @@ void scan(char *s)
                         }
                         break;
                     }
-                }
-                if (ch == '/') //skip comment block
-                {
-                    ch = fgetc(f);
                     if (ch == '*')
                     {
                         while (1)
@@ -146,7 +141,8 @@ void scan(char *s)
                         --cur_token;
                     cur_prot[cur_token++] = ';';
                     cur_prot[cur_token] = 0; //mark the end
-                    puts(cur_prot);          //output to stdout
+                    if (cur_prot[cur_token - 2] != '=' && strncmp(cur_prot, "struct;", 7) != 0)
+                        puts(cur_prot); //output to stdout
                     //skip to right '}'
                     int level = 1;
                     while (level > 0)
