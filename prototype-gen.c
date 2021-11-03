@@ -69,7 +69,13 @@ void scan(char *s)
         char ch = fgetc(f);
         if (ch == '#') //skip preprocessor
         {
-            skipline;
+            for (int level = 1; level > 0; ch = fgetc(f))
+            {
+                if (ch == '\n')
+                    --level;
+                if (ch == '\\')
+                    ++level;
+            }
         }
         if (ch == '/') //skip comment line and block
         {
