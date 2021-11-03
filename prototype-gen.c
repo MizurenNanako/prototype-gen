@@ -8,6 +8,20 @@
 #define WORDBUFLEN 255
 #define PROBUFLEN 1024
 
+#define skipline       \
+    while (ch != '\n') \
+    {                  \
+        ch = fgetc(f); \
+    }                  \
+    continue
+
+#define skiplogicline  \
+    while (ch != ';')  \
+    {                  \
+        ch = fgetc(f); \
+    }                  \
+    continue
+
 char filename[100];
 
 int filter(const struct dirent *p);
@@ -55,22 +69,14 @@ void scan(char *s)
         char ch = fgetc(f);
         if (ch == '#') //skip preprocessor
         {
-            while (ch != '\n')
-            {
-                ch = fgetc(f);
-            }
-            continue;
+            skipline;
         }
         if (ch == '/') //skip comment line and block
         {
             ch = fgetc(f);
             if (ch == '/')
             {
-                while (ch != '\n')
-                {
-                    ch = fgetc(f);
-                }
-                continue;
+                skipline;
             }
             if (ch == '*')
             {
@@ -99,6 +105,10 @@ void scan(char *s)
                 {
                     break;
                 }
+                if (ch == '=') //not definition
+                {
+                    skiplogicline;
+                }
                 if ((ch == '\n') || (ch == '\r') || (ch == '}')) //jump blank char
                 {
                     ch = ' ';
@@ -112,11 +122,7 @@ void scan(char *s)
                     ch = fgetc(f);
                     if (ch == '/')
                     {
-                        while (ch != '\n')
-                        {
-                            ch = fgetc(f);
-                        }
-                        break;
+                        skipline;
                     }
                     if (ch == '*')
                     {

@@ -1,0 +1,1 @@
+prototype-gen : prototype-gen.o
