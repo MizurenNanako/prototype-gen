@@ -1,9 +1,14 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/types.h> //for linux directory searching
-#include <dirent.h>    //for linux directory searching
 #include <string.h>
 #include <ctype.h>
+
+#ifdef WIN32
+#include "windirent.h"  //for windows directory searching
+#else
+#include <sys/types.h> //for linux directory searching
+#include <dirent.h>    //for linux directory searching
+#endif
 
 #define WORDBUFLEN 255
 #define PROBUFLEN 1024
