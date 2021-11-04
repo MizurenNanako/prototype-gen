@@ -4,7 +4,7 @@
 #include <ctype.h>
 
 #ifdef WIN32
-#include "windirent.h"  //for windows directory searching
+#include "windirent.h" //for windows directory searching
 #else
 #include <sys/types.h> //for linux directory searching
 #include <dirent.h>    //for linux directory searching
@@ -35,8 +35,11 @@ void scan(char *s);
 int main(int argc, char **argv)
 {
     int i, n;
-    //you should change the part of code to search through directories
-    //if you are running this under windows
+    if (argc < 2)
+    {
+        printf("One arg is need\n");
+        return -1;
+    }
     struct dirent **p;
     n = scandir(argv[1], &p, filter, alphasort);
     for (i = 0; i < n; i++)
@@ -78,9 +81,24 @@ void scan(char *s)
             {
                 if (ch == '\n')
                     --level;
+                if (ch == '\"')
+                {
+                    ch = fgetc(f);
+                    while (ch != '\"')
+                    {
+                        if (ch == '\\')
+                        {
+                            fgetc(f);
+                        }
+                        ch = fgetc(f);
+                    }
+                }
                 if (ch == '\\')
+                {
                     ++level;
+                }
             }
+            fseek(f, -1, SEEK_CUR);
         }
         if (ch == '/') //skip comment line and block
         {
